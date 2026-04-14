@@ -16,7 +16,7 @@ def append_to_csv(csv_list, output_filename):
         a.writerows(data)
 
     
-def get_h(alpha, v):
+def get_c(alpha, v):
     """
     Calculate the h value based on the given alpha and v values.
     """
@@ -36,12 +36,12 @@ def get_f_i(alpha, r, vv, i):
     """
     v_i = vv[i]
 
-    h = get_h(alpha, v_i)
+    c = get_c(alpha, v_i)
 
     S = np.sum(vv)
     b = get_b(r, S)
 
-    return b - h
+    return b - c
 
 def get_F(N, alpha, r, vv):
 
@@ -51,7 +51,7 @@ def get_F(N, alpha, r, vv):
         
     return F
 
-def get_dh_dv_i(alpha, v_i):
+def get_dc_dv_i(alpha, v_i):
 
     return np.exp(alpha * v_i)
 
@@ -67,14 +67,14 @@ def get_df_dv_i(alpha, r, vv, i):
     Calculate the derivative of f with respect to v_i.
     """
     db_dv_i = get_db_dv_i(r, vv, i)
-    dh_dv_i = get_dh_dv_i(alpha, vv[i])
-    return db_dv_i -dh_dv_i
+    dc_dv_i = get_dc_dv_i(alpha, vv[i])
+    return db_dv_i -dc_dv_i
 
 def get_dF_dv_i(N, alpha, r, vv, i):
 
     db_dv_i = get_db_dv_i(r, vv, i)
-    dh_dv_i = get_dh_dv_i(alpha, vv[i])
-    return db_dv_i - (dh_dv_i / N)
+    dc_dv_i = get_dc_dv_i(alpha, vv[i])
+    return db_dv_i - (dc_dv_i / N)
 
 
 
@@ -206,6 +206,6 @@ if __name__ == "__main__":
 
     #run_sims(N=16, resolution=500)
 
-    run_sims(N=4, resolution=10)
-    run_sims(N=64, resolution=10)
+    run_sims(N=4, resolution=100)
+    run_sims(N=64, resolution=100)
  
