@@ -170,10 +170,10 @@ def simulate(r, alpha, N, v_max, timesteps=1000, group_type="selfish"):
 
     return n_watchers, f_mean
 
-def run_sims():
+def run_sims(N, resolution=100):
 
     alpha_mod_max = 2
-    resolution = 500
+    resolution = resolution
     r_min = 0.01
     r_max = 100
     timesteps = 10000
@@ -181,8 +181,7 @@ def run_sims():
     alphas = np.linspace(-alpha_mod_max,alpha_mod_max,resolution)
     rs = np.logspace(-2, 2, resolution)
 
-    N = 16
-    v_max = 3
+    v_max = 10
 
     seed = 1
     np.random.seed(seed)
@@ -194,14 +193,19 @@ def run_sims():
             n_watchers, f_mean = simulate(r, alpha, N, v_max, timesteps=timesteps, group_type="selfish")
 
             csv_row = ["selfish", N, v_max, r, alpha, r_max, alpha_mod_max, resolution, n_watchers, f_mean]
-            append_to_csv(csv_row, "stochastic_sim_results_large.csv")
+            append_to_csv(csv_row, "sim_results_N_{}.csv".format(N))
 
             n_watchers, f_mean = simulate(r, alpha, N, v_max, timesteps=timesteps, group_type="coop")
 
             csv_row = ["coop", N, v_max, r, alpha, r_max, alpha_mod_max, resolution, n_watchers, f_mean]
-            append_to_csv(csv_row, "stochastic_sim_results_large.csv")
+            append_to_csv(csv_row, "sim_results_N_{}.csv".format(N))
 
+    
 
 if __name__ == "__main__":
-    run_sims()
-    #simulate(r=0.01, alpha=0.5, N=16, v_max=3, timesteps=1000)
+
+    #run_sims(N=16, resolution=500)
+
+    run_sims(N=4, resolution=10)
+    run_sims(N=64, resolution=10)
+ 

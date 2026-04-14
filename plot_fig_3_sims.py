@@ -7,33 +7,24 @@ from matplotlib.colors import to_rgba
 COLOR_MANY_EYES = "#2ecc71"
 COLOR_SENTINEL_N_1 = "#3498db"
 COLOR_SENTINEL_N_2 = "#1d6ca1"
-COLOR_MULTIPLE = "#FF69B4"
+COLOR_SENTINEL_N_3 = "#145A80"
+COLOR_SENTINEL_N_4 = "#0C3B5E"
 COLOR_NO_VIGILANCE = "#404040"
+
 FONTSIZE = 16
 
 # Load the data
-df = pd.DataFrame(pd.read_csv('stochastic_sim_results_large.csv', delimiter=';',
+df = pd.DataFrame(pd.read_csv('sim_results_N_16.csv', delimiter=';',
                               names=["group_type", "N", "v_max", "r", "alpha", "r_max", "alpha_mod_max", "resolution", "n_watchers", "f_mean"]))
 
 # Define custom colors for each classification
 classification_colors = {
     16: COLOR_MANY_EYES,
-    15: COLOR_MANY_EYES,
     0: COLOR_NO_VIGILANCE, 
     1: COLOR_SENTINEL_N_1,  
     2: COLOR_SENTINEL_N_2,  
-    3: "darkblue",
-    4: "pink",
-    6: "grey",
-    5: "grey",
-    10: "grey",
-    13: "grey",
-    11: "grey",
-    12: "grey",
-    14: "grey",
-    8: "grey",
-    7: "grey",
-    9: "grey",
+    3: COLOR_SENTINEL_N_3,
+    4: COLOR_SENTINEL_N_4,
 }
 
 def create_heatmap_data(df_subset):
