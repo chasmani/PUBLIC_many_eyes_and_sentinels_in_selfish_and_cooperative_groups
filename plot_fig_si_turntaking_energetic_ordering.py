@@ -1,17 +1,3 @@
-"""
-Turn-taking figure: 4-panel layout.
-
-Top row:    cost curves c(v, e) for two energy levels
-  Top-left:  concave (alpha=-1)
-  Top-right: convex  (alpha=+1)
-
-Bottom row: vigilance time series for N=4 group
-  Bottom-left:  concave -> turn-taking (one sentinel, others at zero)
-  Bottom-right: convex  -> many-eyes (all at moderate vigilance)
-
-Each bottom panel has N=4 subpanels (one per individual), boxed axes.
-"""
-
 import numpy as np
 from scipy.optimize import minimize_scalar
 import matplotlib.pyplot as plt
@@ -22,8 +8,8 @@ import matplotlib.gridspec as gridspec
 
 def cost(v, alpha, e, eps=0.1, cost_scale=1.0):
     if abs(alpha) < 1e-10:
-        return cost_scale / (eps + e) * v
-    return cost_scale / (eps + e) * (np.exp(alpha * v) - 1) / alpha
+        return cost_scale * v
+    return cost_scale * (np.exp(alpha * v) - 1) / alpha
 
 
 def benefit(S, r):
@@ -71,14 +57,26 @@ def simulate(N, alpha, r, gamma, m, e_max, e_init, v_max,
     hist_v = np.zeros((n_rounds, N))
 
     for t in range(n_rounds):
-        for i in rng.permutation(N):
-            if group_type == 'cooperative':
-                vigilances[i] = cooperative_best_response(
-                    i, vigilances, energies, alpha, r, v_max, cost_scale)
-            elif group_type == 'selfish':
-                S_others = vigilances.sum() - vigilances[i]
-                vigilances[i] = best_response(
-                    energies[i], S_others, alpha, r, v_max, cost_scale)
+        # Choose individuals based on energetic state: higher energy individuals update first
+        energy_order = np.argsort(energies)[::-1]
+        
+        # Each turn, find the equilibrium anew
+        vigilances = np.zeros(N)
+
+        # Run this turn until we reach an equilirium
+        delta = True
+        while delta == True:
+            vigilances_initial = vigilances.copy()
+            for i in energy_order:
+                if group_type == 'cooperative':
+                    vigilances[i] = cooperative_best_response(
+                        i, vigilances, energies, alpha, r, v_max, cost_scale)
+                elif group_type == 'selfish':
+                    S_others = vigilances.sum() - vigilances[i]
+                    vigilances[i] = best_response(
+                        energies[i], S_others, alpha, r, v_max, cost_scale)
+            delta = np.linalg.norm(vigilances - vigilances_initial) > 1e-3
+
         hist_v[t] = vigilances.copy()
 
         for i in range(N):
@@ -94,8 +92,8 @@ def simulate(N, alpha, r, gamma, m, e_max, e_init, v_max,
 
 def sim_and_plot(group_type):
 
-    shared = dict(N=4, gamma=1.0, m=0.3, e_max=10.0,
-                  e_init=5.0, v_max=2, n_rounds=500, seed=42)
+    shared = dict(N=4, gamma=1, m=0.3, e_max=10.0,
+                  e_init=5.0, v_max=2, n_rounds=100, seed=42)
 
     if group_type == 'cooperative':
         r = .5
@@ -107,7 +105,7 @@ def sim_and_plot(group_type):
         shared['group_type'] = 'selfish'
 
     cost_scale_convex = 1.0
-    cost_scale_concave = 10.0
+    cost_scale_concave = 1.0
 
     hv_convex = simulate(alpha=1.0, cost_scale=cost_scale_convex, **shared)
     hv_concave = simulate(alpha=-1.0, cost_scale=cost_scale_concave, **shared)
@@ -144,26 +142,21 @@ def sim_and_plot(group_type):
     ax_cc = fig.add_subplot(gs[0, 0])
     v_arr = np.linspace(0, v_max, 200)
     e_low, e_high = 2, 5
-    ax_cc.plot(v_arr, cost(v_arr, alpha=-1.0, e=e_low, cost_scale=cost_scale_concave),
-            'k-', label=f'low energy ($e_i=${e_low})')
-    ax_cc.plot(v_arr, cost(v_arr, alpha=-1.0, e=e_high, cost_scale=cost_scale_concave),
-            'k--', label=f'high energy ($e_i=${e_high})')
+    
+    ax_cc.plot(v_arr, cost(v_arr, alpha=-1.0, e=e_high, cost_scale=cost_scale_concave), color="black",
+         label=r'$c(v_i) = 1-e^{-v_i}$')
     ax_cc.set_xlabel('Individual vigilance, $v_i$')
     ax_cc.set_ylabel('Cost, $c(v_i)$')
     ax_cc.legend()
 
     # Top-right: convex cost curves
     ax_cx = fig.add_subplot(gs[0, 1])
-    ax_cx.plot(v_arr, cost(v_arr, alpha=1.0, e=e_low, cost_scale=cost_scale_convex),
-            'k-', label=f'low energy ($e_i=${e_low})')
-    ax_cx.plot(v_arr, cost(v_arr, alpha=1.0, e=e_high, cost_scale=cost_scale_convex),
-            'k--', label=f'high energy ($e_i=${e_high})')
+    ax_cx.plot(v_arr, cost(v_arr, alpha=1.0, e=e_high, cost_scale=cost_scale_convex), color="black",
+         label=r'$c(v_i) = e^{v_i} - 1$')
     ax_cx.set_xlabel('Individual vigilance, $v_i$')
     ax_cx.set_ylabel('Cost, $c(v_i)$')
 
     # Set ylims to 0 and 5 for both plots
-    ax_cc.set_ylim(0, 5)
-    ax_cx.set_ylim(0, 5)
 
     ax_cx.legend()
 
@@ -187,7 +180,7 @@ def sim_and_plot(group_type):
         ax.plot(t, hv_concave[burnin:, i], lw=1.5, color=colors[i])
         ax.set_ylim(-0.2, v_max + 0.2)
         
-        ax.set_xlim(t[0], t[-1] + 10)
+        ax.set_xlim(t[0], t[-1])
         for spine in ax.spines.values():
             spine.set_visible(True)
         if i < N - 1:
@@ -217,7 +210,7 @@ def sim_and_plot(group_type):
         ax = fig.add_subplot(gs_br[i])
         ax.plot(t, hv_convex[burnin:, i], lw=1.5, color=colors[i])
         ax.set_ylim(-0.2, v_max + 0.2)
-        ax.set_xlim(t[0], t[-1] + 10)
+        ax.set_xlim(t[0], t[-1])
         for spine in ax.spines.values():
             spine.set_visible(True)
         if i < N - 1:
@@ -253,10 +246,10 @@ def sim_and_plot(group_type):
 
     plt.tight_layout()
 
-    plt.savefig('images/fig_turn_taking_{}.png'.format(group_type), dpi=600, bbox_inches='tight')
+    plt.savefig('images/fig_turn_taking_si_energetic_ordering_{}.png'.format(group_type), dpi=600, bbox_inches='tight')
 
     plt.show()
 
 if __name__ == "__main__":
-    sim_and_plot('cooperative')
+    #sim_and_plot('cooperative')
     sim_and_plot('selfish')

@@ -12,11 +12,11 @@ Individual fitness is given by
 
     f_i = b(S) - c(v_i)
 
-where S = sum of individual vigilances, b(S) = r(1 - exp(-S)) is the shared benefit of predator detection, and c(v) = (exp(alpha * v) - 1) / alpha is the individual cost of vigilance. The parameter alpha controls cost curvature: alpha > 0 gives convex costs (many-eyes), alpha < 0 gives concave costs (sentinels).
+where S = sum of individual vigilances, b(S) = r(1 - exp(-S)) is the shared benefit of predator detection, and c(v) = (exp(alpha * v) - 1) / alpha is the individual cost of vigilance. The parameter alpha controls cost curvature: alpha > 0 gives convex costs (many-eyes), alpha < 0 gives concave costs (sentinels). The turn-taking extensions add a dynamic energetic state, with the cost of vigilance scaled by an individual's energy reserves.
 
 ## Code Structure
 
-The core model is implemented in `sims.py`, which contains:
+The core parameter-space model is implemented in `sims.py`, which contains:
 
 - `get_b(r, S)`: shared benefit of collective vigilance.
 - `get_c(alpha, v)`: individual cost of vigilance.
@@ -26,11 +26,15 @@ The core model is implemented in `sims.py`, which contains:
 - `simulate(r, alpha, N, v_max, group_type)`: runs best-response dynamics to convergence for a given parameter combination, returning the number of vigilant individuals and mean fitness.
 - `run_sims(N, resolution)`: sweeps the (r, alpha) parameter space and writes results to CSV.
 
-Each figure has a corresponding self-contained plotting script. Figures 1, 2, and 4 are analytical and can be generated directly. Figures 3 and the SI figures plot simulation results and require running `sims.py` first.
+Each figure has a corresponding self-contained plotting script:
+
+- Figures 1, 2, and 4 are analytical and can be generated directly.
+- Figure 3 and the SI group-size figure plot results from the parameter sweep and require running `sims.py` first.
+- Figure 5, the SI energetic-ordering figure, and the SI robustness analysis run their own energy-dependent turn-taking simulations and are fully self-contained (they do not require `sims.py`).
 
 ## Reproducing Figures
 
-First, run the simulations (this may take some time at high resolution):
+First, run the parameter-space simulations (this may take some time at high resolution):
 
 ```bash
 python sims.py
@@ -44,12 +48,21 @@ Then generate each figure:
 python plot_fig_1_dynamical_system_with_cost_curves.py   # Figure 1: Best-response dynamics
 python plot_fig_2_optimals_tight_with_cost_curves.py     # Figure 2: Optimal vigilance strategies
 python plot_fig_3_sims.py                                # Figure 3: Parameter space (requires sims.py)
-python plot_fig_4_extended_tight.py                      # Figure 4: Model extensions
+python plot_fig_4_extended.py                            # Figure 4: Model extensions
 python plot_fig_5_turntaking.py                          # Figure 5: Turn-taking with energy dynamics
 python plot_fig_si_sims_varying_N.py                     # SI Figure: Parameter space varying N (requires sims.py)
+python plot_fig_si_turntaking_energetic_ordering.py      # SI Figure: Turn-taking via energetic ordering
 ```
 
 Figures are saved to the `images/` folder.
+
+To reproduce the SI turn-taking robustness table:
+
+```bash
+python analyse_turntaking_robustness.py                  # SI Table: robustness of turn-taking
+```
+
+This writes `turntaking_robustness.csv` and a formatted LaTeX table `turntaking_robustness.tex`.
 
 ## Requirements
 
